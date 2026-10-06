@@ -1307,8 +1307,8 @@ function toast(msg, type='info'){
   el.textContent = msg;
   el.style.transform = 'translateY(0)';
   el.style.opacity = '1';
-  
-  setTimeout(() => {
+
+  setTimeout(function(){
     const target = document.getElementById('toast');
     if (target) {
       target.style.transform = 'translateY(80px)';
