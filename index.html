@@ -3815,7 +3815,7 @@ function doLogin(){
   applyRoleUI();
   nav('dashboard');
 }
-
+window.doLogin = doLogin;
 function doLogout(){
   currentUser=null;
   document.getElementById('login-user').value='';
