@@ -41,6 +41,8 @@
 
   console.log("⚡ Conexión exitosa a Realtime Database (full-pollo).");
 </script>
+
+  
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Full Pollo Bacano — Pedidos & Rutas</title>
@@ -1135,6 +1137,42 @@ if(!DB.pedidos) DB.pedidos = [];
   }
 if(!DB.seq) DB.seq = 1;
 
+  // ══════════════════════════════════════════
+// INTEGRACIÓN FIREBASE REALTIME DATABASE
+// ══════════════════════════════════════════
+
+// 1. Guarda toda la base de datos en Firebase cada vez que se actualice algo
+function syncFirebase() {
+  if (window.db && window.ref && window.set) {
+    const dbRef = window.ref(window.db, 'fpb_data');
+    window.set(dbRef, DB)
+      .then(() => console.log("🔥 Datos sincronizados con Firebase"))
+      .catch((err) => console.error("❌ Error al guardar en Firebase:", err));
+  }
+}
+
+// 2. Escucha cambios en Firebase en tiempo real (para sincronizar otros celulares/PCs)
+function listenFirebase() {
+  if (window.db && window.ref && window.onValue) {
+    const dbRef = window.ref(window.db, 'fpb_data');
+    window.onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        DB = data;
+        localStorage.setItem('fpb_rutas_db', JSON.stringify(DB)); // Copia local
+        if (typeof renderAll === 'function') renderAll();          // Refresca la vista
+        if (typeof renderPedidos === 'function') renderPedidos();  // Refresca pedidos
+      }
+    });
+  } else {
+    // Si Firebase tarda unos milisegundos en cargar, reintenta
+    setTimeout(listenFirebase, 500);
+  }
+}
+
+// Iniciar la escucha en tiempo real
+listenFirebase();
+
 // Seed rutas y productos demo si vacío
 if(DB.rutas.length === 0){
   DB.rutas = [
@@ -1172,13 +1210,50 @@ if(DB.clientes.length === 0){
     {id:'c7',nombre:'Pollería Occidente',barrio:'El Bosque',rutaId:'r5',tel:'3087654321',tipo:'restaurante',dir:'Av El Bosque #55-10',notas:''},
   ];
 }
-saveDB();
+// ══════════════════════════════════════════
+// FUNCIONES DB & SINCRONIZACIÓN FIREBASE
+// ══════════════════════════════════════════
 
-function saveDB(){ localStorage.setItem('fpb_rutas_db', JSON.stringify(DB)); }
+function saveDB() { 
+  // 1. Guarda copia local en el navegador
+  localStorage.setItem('fpb_rutas_db', JSON.stringify(DB)); 
+
+  // 2. Sincroniza inmediatamente con Firebase Realtime Database
+  if (window.db && window.ref && window.set) {
+    const dbRef = window.ref(window.db, 'fpb_data');
+    window.set(dbRef, DB)
+      .then(() => console.log("⚡ Datos guardados en Firebase correctamente"))
+      .catch((err) => console.error("❌ Error guardando en Firebase:", err));
+  }
+}
+
+// Escucha cambios en la nube en tiempo real (Sincroniza entre varios celulares/dispositivos)
+function listenFirebase() {
+  if (window.db && window.ref && window.onValue) {
+    const dbRef = window.ref(window.db, 'fpb_data');
+    window.onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        DB = data;
+        localStorage.setItem('fpb_rutas_db', JSON.stringify(DB));
+        
+        // Si tienes funciones para renderizar/dibujar la interfaz, las ejecuta
+        if (typeof renderAll === 'function') renderAll();
+        if (typeof renderPedidos === 'function') renderPedidos();
+      }
+    });
+  } else {
+    // Reintenta en 300ms si el script modular de Firebase aún no ha terminado de cargar
+    setTimeout(listenFirebase, 300);
+  }
+}
+
+// Iniciar la escucha en tiempo real
+listenFirebase();
+
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function fmt(n){ return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n||0); }
 function today(){ return new Date().toISOString().slice(0,10); }
-
 // ══════════════════════════════════════════
 // NAV
 // ══════════════════════════════════════════
