@@ -1292,8 +1292,8 @@ function nav(page){
 // TOAST
 // ══════════════════════════════════════════
 function toast(msg, type='info'){
-  const t = document.getElementById('toast');
-  if (!t) {
+  const el = document.getElementById('toast');
+  if (!el) {
     console.log(`[Toast - ${type}]: ${msg}`);
     return;
   }
@@ -1303,14 +1303,16 @@ function toast(msg, type='info'){
     error: 'var(--red)',
     warn: 'var(--accent)'
   };
-  t.style.borderColor = colors[type] || 'var(--border2)';
-  t.textContent = msg;
-  t.style.transform = 'translateY(0)';
-  t.style.opacity = '1';
+  el.style.borderColor = colors[type] || 'var(--border2)';
+  el.textContent = msg;
+  el.style.transform = 'translateY(0)';
+  el.style.opacity = '1';
+  
   setTimeout(() => {
-    if (t) {
-      t.style.transform = 'translateY(80px)';
-      t.style.opacity = '0';
+    const target = document.getElementById('toast');
+    if (target) {
+      target.style.transform = 'translateY(80px)';
+      target.style.opacity = '0';
     }
   }, 3000);
 }
