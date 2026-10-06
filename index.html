@@ -1,6 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- INTEGRACIÓN DE FIREBASE (Realtime Database) -->
+<script type="module">
+  // 1. Importar los módulos oficiales de Firebase v10
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { 
+    getDatabase, 
+    ref, 
+    push, 
+    set, 
+    onValue, 
+    update, 
+    remove 
+  } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+  // 2. Configuración oficial con tu URL de Realtime Database
+  const firebaseConfig = {
+    apiKey: "AIzaSyClme1oZXAR-8P3Vnbx9VA3Vtj77m5eiEY",
+    authDomain: "full-pollo.firebaseapp.com",
+    databaseURL: "https://full-pollo-default-rtdb.firebaseio.com",
+    projectId: "full-pollo",
+    storageBucket: "full-pollo.firebasestorage.app",
+    messagingSenderId: "290634766686",
+    appId: "1:290634766686:web:9dbd19e0d0b6c6ca61d7cf"
+  };
+
+  // 3. Inicializar la app y la base de datos
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // 4. Hacer disponibles las funciones en el ámbito global (window)
+  window.db = db;
+  window.ref = ref;
+  window.push = push;
+  window.set = set;
+  window.onValue = onValue;
+  window.update = update;
+  window.remove = remove;
+
+  console.log("⚡ Conexión exitosa a Realtime Database (full-pollo).");
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Full Pollo Bacano — Pedidos & Rutas</title>
