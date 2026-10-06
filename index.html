@@ -43,7 +43,22 @@
   console.log("⚡ Conexión exitosa a Realtime Database (full-pollo).");
 
 </script>
+<script>
+  // 1. DECLARACIÓN DE VARIABLES GLOBALES (Debe ir al inicio)
+  var currentUser = null;
+  var cart = [];
+  var currentCatFilter = 'todos';
 
+  // O con let:
+  // let currentUser = null;
+  // let cart = [];
+  // let currentCatFilter = 'todos';
+
+  // 2. LUEGO TUS FUNCIONES (toast, applyRoleUI, doLogin, nav, etc.)
+  function toast(msg, type='info') { ... }
+  function applyRoleUI() { ... }
+  // ...
+</script>
   
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1316,18 +1331,6 @@ function toast(msg, type='info'){
     }
   }, 3000);
 }
-
-  t.style.borderColor = colors[type] || 'var(--border2)';
-  t.textContent = msg;
-  t.style.transform = 'translateY(0)';
-  t.style.opacity = '1';
-
-  setTimeout(() => {
-    if (t) {
-      t.style.transform = 'translateY(80px)';
-      t.style.opacity = '0';
-    }
-  }, 3000);
 function var_(v){ return getComputedStyle(document.documentElement).getPropertyValue(v); }
 
 // ══════════════════════════════════════════
@@ -3827,14 +3830,27 @@ function doLogout(){
 }
 
 function applyRoleUI(){
-  if(!currentUser)return;
-  var rol=ROLES[currentUser.rol]||ROLES.vendedor;
-  var badge=document.getElementById('topbar-role-badge');
-  var uname=document.getElementById('topbar-username');
-  if(badge){badge.innerHTML=rol.icon+' '+rol.label;badge.className='role-tag '+rol.css;}
-  if(uname)uname.textContent=currentUser.nombre;
+  if(!currentUser) return;
+
+  // Fallback por si ROLES no está definido o el rol específico no existe
+  var rolesMap = (typeof ROLES !== 'undefined' && ROLES) ? ROLES : {};
+  var defaultRol = { icon: '👤', label: 'Vendedor', css: 'badge-vendedor', nav: ['dashboard', 'pedidos', 'clientes'] };
+  var rol = rolesMap[currentUser.rol] || rolesMap.vendedor || defaultRol;
+
+  var badge = document.getElementById('topbar-role-badge');
+  var uname = document.getElementById('topbar-username');
+
+  if(badge && rol.icon && rol.label){
+    badge.innerHTML = rol.icon + ' ' + rol.label;
+    badge.className = 'role-tag ' + (rol.css || '');
+  }
+
+  if(uname) uname.textContent = currentUser.nombre || '';
+
   document.querySelectorAll('.nav-item[data-page]').forEach(function(el){
-    el.style.display=rol.nav.indexOf(el.getAttribute('data-page'))>=0?'':'none';
+    var page = el.getAttribute('data-page');
+    var canSee = Array.isArray(rol.nav) && rol.nav.indexOf(page) >= 0;
+    el.style.display = canSee ? '' : 'none';
   });
 }
 
