@@ -40,6 +40,7 @@
   window.remove = remove;
 
   console.log("⚡ Conexión exitosa a Realtime Database (full-pollo).");
+  <div id="toast" style="position:fixed; bottom:20px; right:20px; padding:12px 20px; background:var(--bg2, #1e1e1e); color:#fff; border:2px solid var(--border2, #444); border-radius:8px; transform:translateY(80px); opacity:0; transition:all 0.3s ease; z-index:9999; pointer-events:none;"></div>
 </script>
 
   
@@ -1290,12 +1291,33 @@ function nav(page){
 // TOAST
 // ══════════════════════════════════════════
 function toast(msg, type='info'){
-  const t=document.getElementById('toast');
-  const colors = {info:var_('--blue'),success:var_('--green'),error:var_('--red'),warn:var_('--accent')};
-  t.style.borderColor = colors[type]||'var(--border2)';
+  const t = document.getElementById('toast');
+  
+  // 1. Si no existe el div id="toast" en el HTML, evita que el script colapse
+  if (!t) {
+    console.log(`[Toast ${type.toUpperCase()}]: ${msg}`);
+    return;
+  }
+
+  // 2. Mapeo de colores corregido
+  const colors = {
+    info: 'var(--blue)',
+    success: 'var(--green)',
+    error: 'var(--red)',
+    warn: 'var(--accent)'
+  };
+
+  t.style.borderColor = colors[type] || 'var(--border2)';
   t.textContent = msg;
-  t.style.transform='translateY(0)';t.style.opacity='1';
-  setTimeout(()=>{t.style.transform='translateY(80px)';t.style.opacity='0';},3000);
+  t.style.transform = 'translateY(0)';
+  t.style.opacity = '1';
+
+  setTimeout(() => {
+    if (t) {
+      t.style.transform = 'translateY(80px)';
+      t.style.opacity = '0';
+    }
+  }, 3000);
 }
 function var_(v){ return getComputedStyle(document.documentElement).getPropertyValue(v); }
 
