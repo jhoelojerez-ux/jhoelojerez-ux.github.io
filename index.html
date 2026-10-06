@@ -1,7 +1,26 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8">window.doLogin = function(e) {
+  if (e) e.preventDefault();
+  
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  
+  // Tu lógica de validación de usuario aquí
+  if (user && pass) {
+    window.currentUser = { nombre: user, rol: 'admin' };
+    document.getElementById('login-screen').classList.add('hidden');
+    if (typeof applyRoleUI === 'function') applyRoleUI();
+    if (typeof showToast === 'function') showToast('Sesión iniciada correctamente');
+  } else {
+    const errDiv = document.getElementById('login-err');
+    if (errDiv) {
+      errDiv.textContent = 'Por favor complete todos los campos';
+      errDiv.style.display = 'block';
+    }
+  }
+};
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Full Pollo Bacano — Pedidos & Rutas</title>
     
@@ -627,9 +646,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 
-  <script>
+ <script>
+    // Variables de estado global
+    window.currentUser = window.currentUser || null;
+
     function showToast(msg) {
       const t = document.getElementById('toast');
+      if (!t) return;
       t.textContent = msg;
       t.style.opacity = '1';
       t.style.transform = 'translateY(0)';
@@ -646,7 +669,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       const targetPage = document.getElementById('page-' + pageId);
       if (targetPage) {
         targetPage.classList.add('active');
-        document.getElementById('page-title').textContent = pageId.toUpperCase();
+        const titleEl = document.getElementById('page-title');
+        if (titleEl) titleEl.textContent = pageId.toUpperCase();
       }
       
       const targetNav = document.querySelector(`.nav-item[data-page="${pageId}"]`);
@@ -654,19 +678,74 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     }
 
     function doLogin(e) {
-      e.preventDefault();
-      const user = document.getElementById('login-user').value;
-      window.currentUser = { nombre: user, rol: 'admin' };
-      document.getElementById('login-screen').classList.add('hidden');
+      if (e) e.preventDefault();
+
+      const userEl = document.getElementById('login-user');
+      const passEl = document.getElementById('login-pass');
+      const errDiv = document.getElementById('login-error') || document.getElementById('login-err');
+
+      const u = (userEl ? userEl.value : '').trim().toLowerCase();
+      const p = passEl ? passEl.value : '';
+
+      if (!u || !p) {
+        if (errDiv) {
+          errDiv.textContent = 'Por favor ingrese usuario y contraseña.';
+          errDiv.style.display = 'block';
+        }
+        return;
+      }
+
+      // Validar contra la base de datos si existe DB.usuarios
+      const usuariosLista = (window.DB && Array.isArray(window.DB.usuarios)) ? window.DB.usuarios : [];
+      let found = usuariosLista.find(x => 
+        (x.usuario || '').toLowerCase() === u && 
+        x.password === p && 
+        x.activo !== false
+      );
+
+      // Si no existe DB.usuarios precargada, fallback temporal para iniciar sesión
+      if (!found && usuariosLista.length === 0) {
+        found = { nombre: u, rol: 'admin', usuario: u };
+      }
+
+      if (!found) {
+        if (errDiv) {
+          errDiv.textContent = 'Usuario o contraseña incorrectos.';
+          errDiv.style.display = 'block';
+        }
+        if (passEl) passEl.value = '';
+        return;
+      }
+
+      window.currentUser = found;
+
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) loginScreen.classList.add('hidden');
+      if (errDiv) errDiv.style.display = 'none';
+
       applyRoleUI();
-      showToast('Sesión iniciada como ' + user);
+      
+      if (typeof nav === 'function') {
+        nav('dashboard');
+      } else {
+        switchPage('dashboard');
+      }
+
+      showToast('¡Bienvenido, ' + (found.nombre || found.usuario) + '!');
     }
 
     function doLogout() {
       window.currentUser = null;
-      document.getElementById('login-user').value = '';
-      document.getElementById('login-pass').value = '';
-      document.getElementById('login-screen').classList.remove('hidden');
+      
+      const userEl = document.getElementById('login-user');
+      const passEl = document.getElementById('login-pass');
+      if (userEl) userEl.value = '';
+      if (passEl) passEl.value = '';
+
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) loginScreen.classList.remove('hidden');
+
+      if (typeof showLoginHint === 'function') showLoginHint();
     }
 
     function applyRoleUI() {
@@ -674,11 +753,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       const badge = document.getElementById('topbar-role-badge');
       const uname = document.getElementById('topbar-username');
 
-      if (badge) badge.innerHTML = '👤 ' + window.currentUser.rol;
-      if (uname) uname.textContent = window.currentUser.nombre;
+      if (badge) badge.innerHTML = '👤 ' + (window.currentUser.rol || 'Usuario');
+      if (uname) uname.textContent = window.currentUser.nombre || window.currentUser.usuario;
     }
+
+    // Exportar explícitamente a window para compatibilidad global
+    window.showToast = showToast;
+    window.switchPage = switchPage;
+    window.doLogin = doLogin;
+    window.doLogout = doLogout;
+    window.applyRoleUI = applyRoleUI;
   </script>
 </body>
+</html>
 
 <div id="toast" style="position:fixed; bottom:20px; right:20px; padding:12px 20px; background:var(--bg2); color:#fff; border:1px solid var(--border2); border-radius:8px; transform:translateY(80px); opacity:0; transition:all .3s; z-index:9999; pointer-events:none;"></div>
 <!-- ══════════ LOGIN ══════════ -->
